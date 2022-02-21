@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Color Game</title>
+    <!-- <link rel="stylesheet" href="reset.css" /> -->
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <style>
+    body {
+      height: 80vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+
+      font-family: 'Poppins', sans-serif;
+      color: #2b2b2b;
+
+      overflow: hidden;
+    }
+
+    .game {
+      max-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .row {
+      display: flex;
+    }
+
+    .cell {
+      width: 70px;
+      height: 70px;
+      margin: 10px;
+      border-radius: 100px;
+    }
+
+    .stats {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .stat-item {
+      margin: 10px;
+    }
+
+    .sizes {
+      display: grid;
+      grid-template-rows: 1fr 1fr 1fr;
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    .size {
+      color: white;
+      width: 100px;
+      border: none;
+      height: 100px;
+      border-radius: 100px;
+      font-size: 2rem;
+      margin: 10px;
+      background-color: rgb(103, 103, 103);
+    }
+
+    #play {
+      font-size: 2rem;
+    }
+
+    a {
+      text-decoration: none;
+    }
+
+    a:visited {
+      color: #2b2b2b;
+    }
+
+    #high-score {
+      font-size: 2rem;
+    }
+  </style>
+  <body>
+    <div class="game">
+      <div class="stats">
+        <h2 class="stat-item" id="high-score">Highest score:</h2>
+        <h2 class="stat-item" id="level">Level:</h2>
+      </div>
+      <div id="game-area"></div>
+    </div>
+    <script type="text/javascript">
+      const gameArea = document.getElementById('game-area');
+      const size = 4;
+      // const size = parseInt(window.localStorage.getItem('size')) || 4;
+      const highestScore = parseInt(
+        window.localStorage.getItem('highestScore')
+      );
+      const score = document.getElementById('high-score');
+      const timer = document.getElementById('timer');
+      const level = document.getElementById('level');
+      const html = document.body;
+
+      class Game {
+        constructor(size) {
+          this.level = 1;
+          this.size = size;
+          this.cells = [];
+          this.highestScore = highestScore;
+          this.timer;
+          this.build();
+          this.winnerColor;
+        }
+
+        build() {
+          this.startTimer();
+          if (!window.localStorage.getItem('highestScore')) {
+            window.localStorage.setItem('highestScore', this.level);
+          }
+
+          level.innerText = `Score: ${this.level}`;
+          score.innerText = `Highest Score: ${this.highestScore}`;
+
+          this.color = this.generateRandomColor();
+          this.winnerColor = this.generateWinnerColor();
+          html.style.backgroundColor = `rgba(${this.color.RED},${this.color.GREEN},${this.color.BLUE}, .2)`;
+
+          for (let row = 0; row < this.size; row++) {
+            const rowEl = document.createElement('div');
+            rowEl.className = 'row';
+            for (let column = 0; column < this.size; column++) {
+              const cellEl = document.createElement('div');
+              cellEl.className = 'cell';
+              this.cells.push(cellEl);
+              rowEl.append(cellEl);
+            }
+            gameArea.append(rowEl);
+          }
+          this.fillCells();
+        }
+
+        fillCells() {
+          const { RED, GREEN, BLUE } = this.color;
+
+          for (let i = 0; i < this.cells.length; i++) {
+            const cell = this.cells[i];
+            cell.style.backgroundColor = `rgb(${RED},${GREEN},${BLUE})`;
+            cell.addEventListener('click', () => {
+              clearTimeout(this.timer);
+              if (cell.winner) {
+                this.level++;
+                html.style.backgroundColor = `#46bb3e`;
+              } else {
+                this.level = 1;
+                html.style.backgroundColor = `#ee4b5f`;
+              }
+              if (this.level > this.highestScore) {
+                this.highestScore = this.level;
+              }
+              this.clear();
+              this.build();
+            });
+          }
+
+          const randomNum = Math.floor(Math.random() * this.cells.length);
+          this.cells[randomNum].style.backgroundColor = this.winnerColor;
+          this.cells[randomNum].winner = true;
+        }
+
+        generateRandomColor() {
+          const RED = Math.floor(Math.random() * 255);
+          const GREEN = Math.floor(Math.random() * 255);
+          const BLUE = Math.floor(Math.random() * 255);
+
+          return { RED, GREEN, BLUE };
+        }
+
+        generateWinnerColor() {
+          const sign = Math.random() > 0.5 ? -1 : 1;
+          const randomNum = Math.random() * 70;
+          const range = (sign * randomNum) % 255;
+          const { RED, GREEN, BLUE } = this.color;
+          const dRED = RED + range;
+          const dGREEN = GREEN + range;
+          const dBLUE = BLUE + range;
+
+          return `rgb(${dRED},${dGREEN},${dBLUE})`;
+        }
+
+        startTimer() {
+          this.timer = setTimeout(() => {
+            this.level = 1;
+            this.clear();
+            this.build();
+          }, 5000);
+        }
+
+        clear() {
+          this.cells = [];
+          gameArea.innerHTML = '';
+        }
+      }
+
+      const game = new Game(size);
+    </script>
+  </body>
+</html>
